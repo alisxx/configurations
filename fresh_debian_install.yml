@@ -1,0 +1,117 @@
+
+- name: new debian install
+  hosts: all
+  become: yes
+  tasks:
+    - name: Updates
+      apt:
+        update_cache: yes
+
+    - name: Install python & other pkg
+      apt:
+        pkg:
+          - python3
+          - python3-pip
+          - python3-dev
+          - build-essential
+          - libssl-dev
+          - libffi-dev
+          - curl
+          - python3-setuptools
+          - python3-venv 
+        state: latest
+        update_cache: true
+
+    - name: Install node
+      apt:
+        pkg:
+          - nodejs
+        state: latest
+        update_cache: true
+
+- hosts: master
+  become: yes
+  tasks:
+    - name: Install other pkg
+      apt:
+        pkg:
+          - docker-ce
+          - docker-ce-cli
+          - docker-compose-plugin
+        state: latest
+        update_cache: true
+
+    - name: Add mozilla apt-key
+      get_url:
+        url: https://packages.mozilla.org/apt/repo-signing-key.gpg
+        dest: /etc/apt/keyrings/packages.mozilla.org.asc
+        mode: "0644"
+        force: true
+
+    - name: Add mozilla APT repo
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc]\n
+ https://packages.mozilla.org/apt mozilla main"
+        state: present
+        update_cache: yes
+
+    - name: Create an empty file for mozilla prefs
+      copy:
+        content: ""
+        dest: /etc/apt/preferences.d/mozilla
+        force: no
+
+    - name: Add mozilla prefs in file
+      blockinfile:
+        path: /etc/apt/preferences.d/mozilla
+        block: |
+          Package: *
+          Pin: origin packages.mozilla.org
+          Pin-Priority: 1000
+
+    - name: Install firefox
+      apt:
+        pkg:
+          - firefox
+        state: latest
+        update_cache: true
+
+    - name: Create python venv dir
+      shell: mkdir -p /opt/venv
+
+    - name: Delete python req file
+      ignore_errors: yes
+      file:
+        state: absent
+        path: /opt/venv/all_requirements.txt
+
+    - name: Create a python req file if not
+      ignore_errors: yes
+      file:
+        path: /opt/venv/all_requirements.txt
+        state: touch
+
+    - name: Add init-venv req in file
+      lineinfile:
+        path: /opt/venv/all_requirements.txt
+        line: "{{ item }}"
+      with_items:
+        - "jupyter"
+        - "ansible"
+        - "ansible-core"
+
+    - name: Create init-venv
+      pip:
+        requirements: /opt/venv/all_requirements.txt
+        virtualenv: /opt/venv/init-venv
+        virtualenv_command: /usr/bin/python3 -m venv
+
+    - name: Install nvm
+      ansible.builtin.shell: >
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+      args:
+        creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+
+    - name: install rust
+      ansible.builtin.shell: >
+        curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh

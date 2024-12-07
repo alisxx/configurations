@@ -1,0 +1,25 @@
+- hosts: control-planes
+  become: yes
+  tasks:
+    - name: Create .kube directory
+      become: yes
+      become_user: "{{ ansible_user }}"
+      file:
+        path: $HOME/.kube
+        state: directory
+        mode: 0755
+
+    - name: Copy admin.conf to User's kube config
+      copy:
+        src: /etc/kubernetes/admin.conf
+        dest: /home/{{ ansible_user }}/.kube/config
+        remote_src: yes
+        owner: "{{ ansible_user }}"
+
+#    - name: rsync admin.conf to control plane kube config
+#      synchronize:
+#        src: /etc/kubernetes/admin.conf
+#        dest: "{{ hostvars['sm-2'] }}/home/{{ ansible_user }}/.kube/config"
+#        remote_src: yes
+#        owner: "{{ ansible_user }}"
+#        delegate_to: my_source_host

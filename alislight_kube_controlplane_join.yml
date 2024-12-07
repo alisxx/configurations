@@ -1,0 +1,49 @@
+- name: Configure Join Commands on Master Node
+  hosts: master
+  become: yes
+  tasks:
+    - name: Retrieve Join Command
+      shell: kubeadm token create --print-join-command
+      register: join_command_raw
+
+    - name: Retrieve CP join Command
+      shell: kubeadm init phase upload-certs --upload-certs --config="/etc/kubernetes/kubeadm-config.yaml" | tail -1
+      register: gen_cert_raw
+
+    - name: Set join_command
+      set_fact:
+        join_command: "{{ join_command_raw.stdout_lines[0] }}"
+
+    - name: Output join command to log
+      shell: "echo join_command: {{ join_command }} >> joinvars.log"
+
+    - name: Set generate_cert
+      set_fact:
+        generate_cert: "{{ gen_cert_raw.stdout }}"
+
+    - name: Output cert to log
+      shell: "echo generate_cert: {{ generate_cert }} >> certvars.log"
+
+- name: Join Master Nodes as additional control plane
+  hosts: control-planes
+  become: yes
+  tasks:
+    - name: Set join_command
+      set_fact:
+        join_command: "{{ hostvars[master_id]['join_command'] }}"
+
+    - name: Set generate_cert
+      set_fact:
+        generate_cert: "{{ hostvars[master_id]['generate_cert'] }}"
+
+    - name: Output join and cert to log
+      shell: "echo controlplane join command: {{ join_command }} --control-plane --certificate-key {{ generate_cert }} >> execjoinvars.log"
+
+    - name: Enable TCP port 6443 (On Master) is able to connect from Worker
+      wait_for: "host={{ master_ip }} port=6443 timeout=1"
+
+    - name: Join addtional control plane to cluster
+      shell: "{{ join_command }} --control-plane --certificate-key {{ generate_cert }} >> master_node_joined.log"
+      args:
+        chdir: /home/{{ ansible_user }}
+        creates: master_node_joined.log
