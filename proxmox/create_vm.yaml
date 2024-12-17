@@ -1,0 +1,14 @@
+- name: create new vm
+  hosts: all
+  become: yes
+  tasks:
+    - name: Create vm with minimal options
+    vars:
+      ansible_python_interpreter: /usr/bin/python3
+    proxmox_kvm:
+      api_user: user@pam
+      api_token_id: user-token
+      api_token_secret: secret-guid
+      api_host: host
+      node: node-hostname
+      name: name

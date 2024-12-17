@@ -1,0 +1,70 @@
+---
+- name: Clone Debian template
+  community.general.proxmox_kvm:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    clone: "{{ clone_name }}"
+    # newid: "{{ vm_id }}"  # Control to the given ID
+    name: "{{ vm_name }}"
+    full: true
+    storage: "{{ vm_storage }}"
+  register: state
+
+- name: Resize disk, if needed
+  community.general.proxmox_disk:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    vmid: "{{ state.vmid }}"
+    disk: "{{ vm_disk_type }}"
+    size: "{{ vm_disk_size }}"
+    state: "resized"
+  when: state.changed
+
+- name: Upload Cloudinit user-data file
+  ansible.builtin.template:
+    src: user-data.yml.j2
+    dest: "{{ snippets_path }}/{{ state.vmid }}-user-data.yml"
+    mode: "0644"
+  when: state.changed
+
+- name: Modify the Cloned VM, adapt a few parameters, attach cloudinit template
+  community.general.proxmox_kvm:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ state.vmid }}"
+    name: "{{ vm_name }}"
+    cores: "{{ vm_cores }}"
+    memory: "{{ vm_memory }}"
+    net:
+      net0: "virtio,bridge={{ vm_bridge }},tag={{ vlan_id }},firewall={{ fw_enabled }}"
+    ide:
+      ide2: "{{ vm_storage }}:cloudinit"
+    serial:
+      serial0: "socket"
+    vga: serial0
+    citype: nocloud
+    cicustom: "user={{snippets_storage}}:snippets/{{ state.vmid }}-user-data.yml"
+    agent: "enabled=1"
+    update: yes
+    update_unsafe: yes
+  when: state.changed
+
+- name: Start the VM
+  community.general.proxmox_kvm:
+    api_host: "{{ api_host }}"
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    node: "{{ proxmox_node }}"
+    vmid: "{{ state.vmid }}"
+    name: "{{ vm_name }}"
+    state: started
+  when: state.changed

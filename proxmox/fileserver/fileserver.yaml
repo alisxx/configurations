@@ -1,0 +1,63 @@
+- name: fileserver
+  hosts: fileserver
+  become: yes
+  gather_facts: false
+  tasks:
+    - name: Updates
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install packages
+      apt:
+        pkg:
+          - sudo
+          - python3
+          - python3-pip
+          - python3-dev
+          - build-essential
+          - libssl-dev
+          - libffi-dev
+          - curl
+
+    - name: Create a new user
+      user:
+        name: fileserver
+        state: present
+        shell: /bin/bash
+        home: /home/fileserver
+        groups: sudo
+        comment: "New user fileserver created by Ansible"
+
+    - name: Configure sources.list to include backports
+      blockinfile:
+        path: /etc/apt/sources.list
+        block: |
+          deb http://deb.debian.org/debian bookworm-backports main contrib 
+          deb-src http://deb.debian.org/debian bookworm-backports main contrib 
+
+    - name: Updates
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install Cockpit
+      shell: sudo apt install -t bookworm-backports cockpit --no-install-recommends -y
+
+    - name: Get Cockpit Identities deb
+      shell: wget https://github.com/45Drives/cockpit-identities/releases/download/v0.1.12/cockpit-identities_0.1.12-1focal_all.deb
+
+    - name: Get Cockpit Navigator deb
+      shell: wget https://github.com/45Drives/cockpit-navigator/releases/download/v0.5.10/cockpit-navigator_0.5.10-1focal_all.deb
+
+    - name: Get Cockpit File Sharing deb
+      shell: wget https://github.com/45Drives/cockpit-file-sharing/releases/download/v4.2.8/cockpit-file-sharing_4.2.8-1focal_all.deb
+    
+    - name: Install Cockpit plugins
+      shell: sudo apt install ./*.deb -y

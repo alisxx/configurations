@@ -1,0 +1,64 @@
+- name: new debian install
+  hosts: all
+  become: yes
+  tasks:
+    - name: Updates
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install python & other pkg
+      apt:
+        pkg:
+          - sudo
+          - python3
+          - python3-pip
+          - python3-dev
+          - build-essential
+          - libssl-dev
+          - libffi-dev
+          - curl
+          - python3-setuptools
+          - python3-venv
+          - python3-promoxer
+          - ansible 
+        state: latest
+        update_cache: true
+
+    - name: create alis user
+      user:
+        name: alis
+        shell: '/bin/bash'
+
+    - name: add alis ssh key
+      authorized_key:
+        user: alis
+        key: ""
+
+    - name: add alis to sudoers
+      copy:
+        src: sudoer_ansible
+        dest: /etc/sudoers.d/ansible
+        owner: root
+        group: root
+        mode: 0440
+
+    - name: Install node
+      apt:
+        pkg:
+          - nodejs
+        state: latest
+        update_cache: true
+
+    - name: Install nvm
+      ansible.builtin.shell: >
+        curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+      args:
+        creates: "{{ ansible_env.HOME }}/.nvm/nvm.sh"
+
+    - name: install rust
+      ansible.builtin.shell: >
+        curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh

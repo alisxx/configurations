@@ -1,0 +1,36 @@
+---
+# defaults/main.yaml
+# API
+api_host: "compute0"
+api_user: "root@pam"
+api_token_id: "ansible"
+api_token_secret: "9628193b-900f-4bb6-ab70-321e37bfcb42"
+
+# Node where the VM shall be started
+proxmox_node: "compute0"
+
+# Name of the Debian Clone Template
+clone_name: "Debian12"
+
+# For cloud-init
+domain_name: codeschoepfer.de
+timezone: "Europe/Berlin"
+locale: "en_US.UTF-8"
+
+# Snippet-Storage 
+snippets_path: "/mnt/pve/ISO/snippets/"
+snippets_storage: "ISO"
+
+# VM-Storage
+vm_storage: "SSD-Pool"
+
+# Vars for the VM itself DemoVM
+vm_name: "demoVM"
+vm_memory: 2048
+vm_cores: 2
+vm_disk_size: "32G"
+vm_disk_type: "scsi0"
+cloudinit_user: "demo"
+vm_bridge: "vmbr0"
+vlan_id: 77
+fw_enabled: 0

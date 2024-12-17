@@ -1,0 +1,34 @@
+#cloud-config
+
+hostname: {{ vm_name }}
+timezone: {{ timezone }}
+
+user: {{ cloudinit_user }}
+
+manage_etc_hosts: localhost
+fqdn: {{ vm_name }}.{{ domain_name }}
+
+ssh_authorized_keys:
+  - ssh-ed25519 """" user@gmail.com
+
+chpasswd:
+  expire: false
+users:
+  - default
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - needrestart
+  - qemu-guest-agent
+
+runcmd:
+  - timedatectl set-ntp true
+  - locale-gen {{ locale }}
+  - localectl set-locale LANG={{ locale }}
+  - systemctl enable qemu-guest-agent
+  - systemctl start qemu-guest-agent
+
+power_state:
+  mode: reboot

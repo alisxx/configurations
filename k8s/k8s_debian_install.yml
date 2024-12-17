@@ -18,7 +18,8 @@
           - libffi-dev
           - curl
           - python3-setuptools
-          - python3-venv 
+          - python3-venv
+          - ansible 
         state: latest
         update_cache: true
 
