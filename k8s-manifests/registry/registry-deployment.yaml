@@ -1,0 +1,70 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: docker-registry
+  namespace: docker-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: docker-registry
+  template:
+    metadata:
+      labels:
+        app: docker-registry
+    spec:
+      containers:
+        - name: docker-registry
+          image: registry:2
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+            - name: docker-registry-storage
+              mountPath: /var/lib/registry
+              subPath: registry
+      volumes:
+        - name: docker-registry-storage
+          persistentVolumeClaim:
+            claimName: iregistry-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-registry
+  namespace: docker-registry
+spec:
+  selector:
+    app: docker-registry
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30500
+  type: NodePort
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: docker-registry
+  namespace: docker-registry
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "2.5G"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: registry.exponentify.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: docker-registry
+                port:
+                  number: 5000
+  tls:
+    - hosts:
+        - registry.exponentify.com # This resolves only in my private DNS, so I know it won't be used outside my network
+      secretName: docker-registry-tls

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: exp-deployment
+  namespace: exponentify
+  labels:
+    app: exp
+spec:
+  selector:
+    matchLabels:
+      app: exp
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: exp
+    spec:
+      containers:
+      - name: exp
+        image: registry.exponentify.com:5000/exp:v1.0
+        ports:
+        - containerPort: 80
+      imagePullSecrets:
+      - name: regcred
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: exp-svc
+spec:
+  selector:
+    app: exp
+  ports:
+    - port: 8088
+      targetPort: 80
+  type: ClusterIP

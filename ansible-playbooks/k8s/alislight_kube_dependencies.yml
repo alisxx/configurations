@@ -155,6 +155,36 @@
         name: net.ipv4.ip_forward
         value: 1
 
+    - name: Download/unarchive Packages
+      unarchive:
+        src: https://github.com/containerd/nerdctl/releases/download/v2.0.2/nerdctl-2.0.2-linux-amd64.tar.gz
+        dest: /usr/local/bin
+        owner: alis
+        group: alis
+        remote_src: yes
+        force: no
+        creates: /usr/local/bin/nerdctl-2.0.2
+
+    - name: Install nfs-common if nfs storage needs mounting
+      apt:
+        name: nfs-common
+        state: present
+
+    # - name: Mount NFS volumes for share image registry
+    #   ansible.posix.mount:
+    #     src: {{ nfs_host_ip }}:/rpool/iregistry
+    #     path: /mnt/zfs/iregistry
+    #     opts: rw,sync,hard
+    #     state: mounted
+    #     fstype: nfs
+
+    # - name: Add nfs mount to fstab to auto mount at boot 
+    #   lineinfile:
+    #     path: /etc/fstab
+    #     line: "{{ item }}"
+    #   with_items:
+    #     - "{{ nfs_host_ip }}:/rpool/iregistry  /mnt/zfs/iregistry  nfs  auto  0  0"
+
     - name: Updates
       apt:
         update_cache: yes

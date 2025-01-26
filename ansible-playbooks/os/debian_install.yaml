@@ -23,28 +23,27 @@
           - curl
           - python3-setuptools
           - python3-venv
-          - python3-promoxer
           - ansible 
         state: latest
         update_cache: true
 
-    - name: create alis user
-      user:
-        name: alis
-        shell: '/bin/bash'
+    # - name: create alis user
+    #   user:
+    #     name: alis
+    #     shell: '/bin/bash'
 
-    - name: add alis ssh key
-      authorized_key:
-        user: alis
-        key: ""
+    # - name: add alis ssh key
+    #   authorized_key:
+    #     user: alis
+    #     key: ""
 
-    - name: add alis to sudoers
-      copy:
-        src: sudoer_ansible
-        dest: /etc/sudoers.d/ansible
-        owner: root
-        group: root
-        mode: 0440
+    # - name: add alis to sudoers
+    #   copy:
+    #     src: sudoer_ansible
+    #     dest: /etc/sudoers.d/ansible
+    #     owner: root
+    #     group: root
+    #     mode: 0440
 
     - name: Install node
       apt:
@@ -61,4 +60,4 @@
 
     - name: install rust
       ansible.builtin.shell: >
-        curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+        curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf -y | sh

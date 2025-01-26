@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+#    kubernetes.io/tls-acme: 'true'
+#    nginx.ingress.kubernetes.io/auth-type: basic
+#    nginx.ingress.kubernetes.io/auth-secret: docker-registry/registry-auth
+#    nginx.ingress.kubernetes.io/auth-realm: "Registry Realm"
+#    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+#    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+#    nginx.ingress.kubernetes.io/auth-tls-secret: docker-registry/registry-tls-expf
+#    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"
+#    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+  name: docker-registry
+  namespace: docker-registry
+spec:
+  ingressClassName: nginx-internal
+#  tls:
+#  - hosts:
+#    - registry.exponentify.com
+#    secretName: registry-tls-expf
+  rules:
+  - host: registry.exponentify.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: docker-registry
+            port:
+              number: 5000

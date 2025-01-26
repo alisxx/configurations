@@ -1,0 +1,34 @@
+---
+additionalArguments:
+  - --entrypoints.websecure.http.tls.certresolver=ionos
+  - --entrypoints.websecure.http.tls.domains[0].main=PRIMARY_DOMAIN
+  - --entrypoints.websecure.http.tls.domains[0].sans=*.PRIMARY_DOMAIN
+  - --certificatesresolvers.ionos.acme.dnschallenge.provider=ionos
+  - --certificatesresolvers.ionos.acme.email=webmaster@PRIMARY_DOMAIN
+  - --certificatesresolvers.ionos.acme.dnschallenge.resolvers=1.1.1.1
+  - --certificatesresolvers.ionos.acme.storage=/data/acme.json
+
+deployment:
+  initContainers:
+    - name: volume-permissions
+      image: busybox:1.31.1
+      command: ["sh", "-c", "chmod -Rv 600 /data/*"]
+      volumeMounts:
+        - name: data
+          mountPath: /data
+
+env:
+  - name: IONOS_API_KEY
+    valueFrom:
+      secretKeyRef:
+        key: IONOS_API_KEY
+        name: ionos-api-credentials
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+persistence:
+  enabled: true
+  path: /data
+  size: 128Mi

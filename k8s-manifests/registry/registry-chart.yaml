@@ -1,0 +1,10 @@
+---
+replicaCount: 1
+persistence:
+  enabled: true
+  size: 10Gi
+  deleteEnabled: true
+  storageClass: standard
+  existingClaim: iregistry-pvc
+secrets:
+  htpasswd: alis:$2y$05$oSJZ.kIpKqldtKLwrsdBLeTJ/KrGehomP27buG.6vNIC8W2JqaJ8C

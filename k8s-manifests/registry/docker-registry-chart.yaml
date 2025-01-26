@@ -1,0 +1,37 @@
+---
+replicaCount: 1
+namespace: docker-registry
+#ingress:
+#  enabled: true
+#  className: nginx-internal
+#  hosts:
+#    - registry.exponentify.com
+#  annotations:
+#    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+#    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
+#    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+#    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+#    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "600"
+#    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "10"
+#    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+#    kubernetes.io/tls-acme: 'true'
+#    nginx.ingress.kubernetes.io/auth-type: basic
+#    nginx.ingress.kubernetes.io/auth-secret: docker-registry/registry-auth
+#    nginx.ingress.kubernetes.io/auth-realm: "Registry Realm"
+#    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+#    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+#    nginx.ingress.kubernetes.io/auth-tls-secret: docker-registry/registry-tls-expf
+#    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"
+#    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+#    tls:
+#      - secretName: registry-tls-exp
+#        hosts:
+#          - registry.exponentify.com
+persistence:
+  enabled: true
+  size: 10Gi
+  deleteEnabled: true
+  storageClass: docker-registry-storage
+  existingClaim: iregistry-pvc
+secrets:
+  htpasswd: alis:$2y$05$oSJZ.kIpKqldtKLwrsdBLeTJ/KrGehomP27buG.6vNIC8W2JqaJ8C
