@@ -1,4 +1,5 @@
 ---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,32 +17,56 @@ spec:
     spec:
       containers:
         - name: docker-registry
-          image: registry:2
+          image: registry:2.6.2
+          env:
+            - name: REGISTRY_AUTH
+              value: "htpasswd"
+            - name: REGISTRY_HTTP_SECRET
+              value: "htpasswd"
+            - name: REGISTRY_AUTH_HTPASSWD_REALM
+              value: "Registry Realm"
+            - name: REGISTRY_AUTH_HTPASSWD_PATH
+              value: "/auth/htpasswd"
+#            - name: REGISTRY_HTTP_HOST
+#              value: "https://registry.alislight.com:443" 
+#            - name: REGISTRY_HTTP_ADDR
+#              value: ":5000"
+            - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
+              value: "/var/lib/registry"
           ports:
-            - containerPort: 5000
+          - name: http
+            containerPort: 5000
           volumeMounts:
-            - name: docker-registry-storage
-              mountPath: /var/lib/registry
-              subPath: registry
+          - name: auth
+            mountPath: "/auth"
+            readOnly: true
+          - name: image-store
+            mountPath: "/var/lib/registry"
       volumes:
-        - name: docker-registry-storage
+        - name: image-store
           persistentVolumeClaim:
             claimName: iregistry-pvc
+        - name: auth
+          secret:
+            secretName: registry-auth
+
 ---
-apiVersion: v1
+
 kind: Service
+apiVersion: v1
 metadata:
   name: docker-registry
   namespace: docker-registry
+  labels:
+    app: docker-registry
 spec:
   selector:
     app: docker-registry
   ports:
-    - protocol: TCP
-      port: 5000
-      targetPort: 5000
-      nodePort: 30500
-  type: NodePort
+  - name: http
+    port: 5000
+    targetPort: 5000
+
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -49,12 +74,17 @@ metadata:
   name: docker-registry
   namespace: docker-registry
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/proxy-body-size: "2.5G"
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
 spec:
-  ingressClassName: nginx
+  ingressClassName: nginx-int
+  tls:
+  - hosts:
+    - registry.alislight.com
+    secretName: registry-tls
   rules:
-    - host: registry.exponentify.com
+    - host: registry.alislight.com
       http:
         paths:
           - path: /
@@ -64,7 +94,3 @@ spec:
                 name: docker-registry
                 port:
                   number: 5000
-  tls:
-    - hosts:
-        - registry.exponentify.com # This resolves only in my private DNS, so I know it won't be used outside my network
-      secretName: docker-registry-tls

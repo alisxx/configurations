@@ -17,13 +17,13 @@ metadata:
   name: docker-registry
   namespace: docker-registry
 spec:
-  ingressClassName: nginx-internal
+  ingressClassName: nginx-int
 #  tls:
 #  - hosts:
-#    - registry.exponentify.com
-#    secretName: registry-tls-expf
+#    - registry.alislight.com
+#    secretName: registry-tls
   rules:
-  - host: registry.exponentify.com
+  - host: registry.alislight.com
     http:
       paths:
       - path: /

@@ -1,16 +1,16 @@
 ---
 replicaCount: 1
 namespace: docker-registry
-#ingress:
-#  enabled: true
-#  className: nginx-internal
-#  hosts:
-#    - registry.exponentify.com
-#  annotations:
-#    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+ingress:
+  enabled: true
+  className: nginx-int
+  hosts:
+    - registry.alislight.com
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
 #    nginx.ingress.kubernetes.io/proxy-connect-timeout: "600"
-#    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
-#    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
 #    nginx.ingress.kubernetes.io/proxy-next-upstream-timeout: "600"
 #    nginx.ingress.kubernetes.io/proxy-next-upstream-tries: "10"
 #    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
@@ -24,14 +24,26 @@ namespace: docker-registry
 #    nginx.ingress.kubernetes.io/auth-tls-verify-depth: "1"
 #    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
 #    tls:
-#      - secretName: registry-tls-exp
+#      - secretName: registry-tls
 #        hosts:
-#          - registry.exponentify.com
+#          - registry.alislight.com
 persistence:
   enabled: true
   size: 10Gi
   deleteEnabled: true
   storageClass: docker-registry-storage
   existingClaim: iregistry-pvc
+#tlsSecretName: registry-tls
 secrets:
-  htpasswd: alis:$2y$05$oSJZ.kIpKqldtKLwrsdBLeTJ/KrGehomP27buG.6vNIC8W2JqaJ8C
+  htpasswd: alis:$2y$05$7cyIL/rhUMn9QKuEz7/UIOlJ3F6xGmF5f5bpAfN0mqzYNHSTkX0z2
+configData:
+  health:
+    storagedriver:
+      enabled: true
+      interval: 300s
+      threshold: 3
+extraEnvVars:
+  - name: REGISTRY_AUTH_HTPASSWD_REALM
+    value: "Registry alislight Realm"
+  - name: REGISTRY_HTTP_HOST
+    value: "https://registry.alislight.com:443"

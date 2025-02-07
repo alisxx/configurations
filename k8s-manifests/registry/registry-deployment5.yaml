@@ -16,36 +16,28 @@ spec:
     spec:
       containers:
         - name: docker-registry
-          image: registry:2.6.2
+          image: registry:2
+          ports:
+            - containerPort: 5000
+          volumeMounts:
+          - mountPath: /var/lib/registry
+            name: registry-storage
+          - mountPath: /auth
+            name: auth
+            readOnly: true
           env:
-#            - name: REGISTRY_HTTP_TLS_CERTIFICATE
-#              value: /certs/tls.crt
-#            - name: REGISTRY_HTTP_TLS_KEY
-#              value: /certs/tls.key
             - name: REGISTRY_AUTH
               value: "htpasswd"
 #            - name: REGISTRY_AUTH_HTPASSWD_REALM
 #              value: "Registry Realm"
-#            - name: REGISTRY_AUTH_HTPASSWD_PATH
-#              value: /auth/htpasswd
+            - name: REGISTRY_AUTH_HTPASSWD_PATH
+              value: /auth/htpasswd
             - name: REGISTRY_HTTP_SECRET
               value: "htpasswd"
             - name: REGISTRY_HTTP_ADDR
               value: ":5000"
             - name: REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY
               value: "/var/lib/registry"
-          ports:
-            - name: http
-              containerPort: 5000
-          volumeMounts:
-            - mountPath: /var/lib/registry
-              name: registry-storage
-            - mountPath: /auth
-              name: auth
-              readOnly: true
-#            - mountPath: /certs
-#              name: certs
-#              readOnly: true
       volumes:
       - name: registry-storage
         persistentVolumeClaim:
@@ -53,22 +45,38 @@ spec:
       - name: auth
         secret:
           secretName: registry-auth
-#      - name: certs
-#        secret:
-#          secretName: registry-tls
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
   name: docker-registry
   namespace: docker-registry
-  labels:
-    app: docker-registry
 spec:
   selector:
     app: docker-registry
   ports:
-  - name: http
-    port: 5000
-    targetPort: 5000
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: docker-registry
+  namespace: docker-registry
+#  annotations:
+#    cert-manager.io/cluster-issuer: letsencrypt-prod
+#    nginx.ingress.kubernetes.io/proxy-body-size: "2.5G"
+spec:
+  ingressClassName: nginx-int
+  rules:
+    - host: registry.alislight.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: docker-registry
+                port:
+                  number: 5000

@@ -18,12 +18,12 @@ spec:
     spec:
       containers:
       - name: exp
-        image: ghcr.io/alisxx/exp:1.1
+        image: registry.alislight.com/exp:1.1
         imagePullPolicy: IfNotPresent
         ports:
-        - containerPort: 80
+        - containerPort: 8080
       imagePullSecrets:
-      - name: ghregcred
+      - name: regcred
 ---
 apiVersion: v1
 kind: Service
@@ -35,21 +35,22 @@ spec:
     app: exp
   ports:
     - port: 8080
-      targetPort: 80
+      targetPort: 8080
   type: ClusterIP
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: exp-ingress
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
+  name: exp
+  namespace: exponentify
+#  annotations:
 spec:
   ingressClassName: nginx
-#  tls:
-#  - secretName: tls-secret
+  tls:
+  - secretName: exp-tls
   rules:
-  - http:
+  - host: "exponentify.com"
+    http:
       paths:
         - path: /
           pathType: Prefix
@@ -57,4 +58,4 @@ spec:
             service:
               name: exp
               port:
-                number: 8088
+                number: 8080
