@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cnpg-db
+  namespace: cnpg-db-cluster
+spec:
+  selector:
+    app: cnpg-db
+  ports:
+  - port: 5432
+    targetPort: 5432
+    nodePort: 30839 # Optional, Kubernetes will assign one if not specified
+  type: NodePort

@@ -1,0 +1,208 @@
+# apiVersion: v1
+# data:
+#   password: K3hYTkd0RjZ3dFhoaUdrOHYzcnIxRWorOG9OK0pFRXFUUG82ZXVoMWUzQT0=
+#   username: app
+# kind: Secret
+# metadata:
+#   name: cnpg-app
+# type: kubernetes.io/basic-auth
+# ---
+# apiVersion: v1
+# data:
+#   password: MWlWRVhDYWRMMnBKN3JPTk9JaWRwSE15cXVRcC9yK2NwQXdRekxSU2N1az0=
+#   username: text-app
+# kind: Secret
+# metadata:
+#   name: cnpg-text-app
+# type: kubernetes.io/basic-auth
+# ---
+# apiVersion: v1
+# data:
+#   password: THluQVJiYkY2Nmp0K2Rob3RrYXArQnZubVl2WnZjOGdGd0RmbDNFUGQxTT0=
+#   username: cnpg-superuser
+# kind: Secret
+# metadata:
+#   name: cnpg-superuser
+# type: kubernetes.io/basic-auth
+# ---
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: cnpg-db
+  namespace: cnpg-db-cluster
+spec:
+  description: "cnpg db cluster"
+  
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1"
+
+  storage:
+    size: 10Gi
+    #resizeInUseVolumes: false
+    #pvcTemplate:
+    #  dataSource:
+    #    apiGroup: v1
+    #    name: cnpg-pvc
+    #    kind: PersistentVolumeClaim
+    pvcTemplate:
+      accessModes:
+        - ReadWriteMany
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: cnpg-db
+      volumeMode: Filesystem
+
+  affinity:
+    enablePodAntiAffinity: true
+  
+  imageName: ghcr.io/cloudnative-pg/postgresql:17.4
+  # imagePullSecret is only required if the images are located in a private registry
+  # imagePullSecrets:
+  #   - name: private_registry_access
+
+  bootstrap:
+    initdb:
+      #localeCollate: 'en_US.utf8'
+      #localeCType: 'en_US.utf8'
+      database: kasbah
+      owner: postgres
+      secret:
+        name: cnpg-superuser
+      #dataChecksums: true
+      #encoding: 'UTF8' #default
+      #postInitTemplateSQLRefs:
+      #  configMapRefs:
+      #  - name: init-sql-config
+      #    key: initialize-roles.sql
+      #  - name: init-sql-config
+      #    key: privileges-trigger.sql
+      #postInitSQL:
+      #  - CREATE DATABASE text-app OWNER text-app
+    
+    
+    # Alternative bootstrap method: start from a backup
+    #recovery:
+    #  backup:
+    #    name: backup-example
+
+  managed:
+    services:
+      disabledDefaultServices: ["ro", "r"]
+      additional:
+        - selectorType: rw
+          serviceTemplate:
+            metadata:
+              name: "cnpg-db-1-lb"
+            spec:
+              type: LoadBalancer  
+
+  enablePDB: true
+  enableSuperuserAccess: true
+  superuserSecret:
+    name: cnpg-superuser
+  logLevel: info
+  instances: 1
+  startDelay: 300
+  stopDelay: 300
+  primaryUpdateStrategy: unsupervised
+  # maxSyncReplicas: 0
+  # minSyncReplicas: 0
+  # monitoring:
+  #   # customQueriesConfigMap:
+  #   # - key: queries
+  #   #   name: cnpg-default-monitoring
+  #   # disableDefaultQueries: false
+  #   enablePodMonitor: true
+  postgresGID: 26
+  postgresUID: 26
+  
+  postgresql:
+    enableAlterSystem: true
+    parameters:
+      max_connections: "100"
+      # max_parallel_maintenance_workers: "4"
+      # max_parallel_workers: "8"
+      # max_parallel_workers_per_gather: "4"
+      # max_replication_slots: "32"
+      max_worker_processes: "8"
+      shared_buffers: 512MB
+      pg_stat_statements.max: '10000'
+      pg_stat_statements.track: all
+      auto_explain.log_min_duration: '10s'
+      huge_pages: "off"
+    #pg_hba:
+    #  - local all all scram-sha-256
+    #  - host all all 0.0.0.0/0 scram-sha-256
+    # pg_hba:
+    #   - local all all scram-sha-256              # Password authentication for local connections
+    #   - host all all 0.0.0.0/0 scram-sha-256     # Password authentication for external connections
+
+  # managed:
+  #   roles:
+  #   - name: text-app
+  #     createdb: true
+  #     login: true
+    # - name: text-app
+    #   ensure: present
+    #   comment: text-app db user
+    #   login: true
+    #   superuser: false
+    #   createdb: true
+    #   createrole: false
+    #   inherit: false
+    #   replication: false
+    #   bypassrls: false
+    #   connectionLimit: 4
+    #   validUntil: "2053-04-12T15:04:05Z"
+    #   inRoles:
+    #     - pg_monitor
+    #     - pg_signal_backend
+    #   passwordSecret:
+    #     name: cnpg-text-app
+
+  # tablespaces:
+  #   - name: text_app
+  #     storage:
+  #       size: 5Gi
+  #       storageClass: cnpg-storage
+  #     temporary: true
+    # - name: another_tablespace
+    #   storage:
+    #     size: 2Gi
+    #     storageClass: standard
+    #   temporary: true
+    # - name: tablespacea1
+    #   storage:
+    #     size: 2Gi
+    #     storageClass: standard
+
+  # backup:
+  #   barmanObjectStore:
+  #     destinationPath: s3://cluster-example-full-backup/
+  #     endpointURL: http://custom-endpoint:1234
+  #     s3Credentials:
+  #       accessKeyId:
+  #         name: backup-creds
+  #         key: ACCESS_KEY_ID
+  #       secretAccessKey:
+  #         name: backup-creds
+  #         key: ACCESS_SECRET_KEY
+  #     wal:
+  #       compression: gzip
+  #       encryption: AES256
+  #     data:
+  #       compression: gzip
+  #       encryption: AES256
+  #       immediateCheckpoint: false
+  #       jobs: 2
+  #   retentionPolicy: "30d"  
+
+  # nodeMaintenanceWindow:
+  #   inProgress: false
+  #   reusePVC: false

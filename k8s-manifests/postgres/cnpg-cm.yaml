@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tcp-services
+  namespace: ingress-nginx-int
+data:
+  5432: cnpg-db-cluster/cnpg-db-rw:5432

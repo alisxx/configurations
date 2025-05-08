@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pg-config
+  namespace: pgsql
+  labels:
+    app: postgres
+data:
+  POSTGRES_DB: pg_db
+  POSTGRES_USER: pg_user
+  POSTGRES_PASSWORD: security
+  postgresql.conf: |
+    max_connections = 100
+    shared_buffers = 256MB
+    log_statement = 'all'

@@ -1,0 +1,12 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: cnpg-db
+provisioner: kubernetes.io/no-provisioner # indicates that this StorageClass does not support automatic provisioning
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  fsOwner: "26:26"
+  fsType: ext4
+  root_owner: "26:26"
